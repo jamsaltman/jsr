@@ -6,16 +6,26 @@ const actionModules = import.meta.glob<Record<string, unknown>>('../features/**/
 
 export type DemoActionOverrides = Partial<DemoActionCatalog>;
 
-export function discoverDemoActions(overrides: DemoActionOverrides = {}): DemoActionCatalog {
+export function isAutoHealableExport(value: unknown): value is (...args: any[]) => Promise<unknown> {
+  return typeof value === 'function' && value.constructor.name === 'AsyncFunction';
+}
+
+export function collectAutoHealableExports(modules: Record<string, Record<string, unknown>>) {
   const discovered: Record<string, unknown> = {};
 
-  for (const moduleExports of Object.values(actionModules)) {
+  for (const moduleExports of Object.values(modules)) {
     for (const [exportName, exportedValue] of Object.entries(moduleExports)) {
-      if (exportName.endsWith('Action') && typeof exportedValue === 'function') {
+      if (isAutoHealableExport(exportedValue)) {
         discovered[exportName] = exportedValue;
       }
     }
   }
+
+  return discovered;
+}
+
+export function discoverDemoActions(overrides: DemoActionOverrides = {}): DemoActionCatalog {
+  const discovered = collectAutoHealableExports(actionModules);
 
   const actions = {
     ...discovered,
