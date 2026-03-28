@@ -1,0 +1,8 @@
+{
+  "pid": 60626,
+  "parent_pid": 60610,
+  "cwd": "/Users/haoyang/Projects/jsr",
+  "started_at": "2026-03-28T17:12:43.471Z",
+  "max_lifetime_ms": 21600000,
+  "owner_token": "60626-1774717963471-zqxyit3w"
+}

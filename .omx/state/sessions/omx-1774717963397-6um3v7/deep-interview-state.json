@@ -1,0 +1,213 @@
+{
+  "active": false,
+  "started_at": "2026-03-28T17:13:54Z",
+  "current_phase": "complete",
+  "task_description": "Interview user to lock product/spec for a tiny Ralphthon self-heal runtime + demo repo.",
+  "interview_id": "a15c12c0-8527-4895-a6c0-4af7a6edc36f",
+  "profile": "standard",
+  "type": "greenfield",
+  "initial_idea": "Ralphthon project with packages/self-heal-runtime and apps/demo; injected self-heal runtime catches one seeded runtime error, requests backend OpenAI patch, applies patch on client, polished UX, visible recovery.",
+  "rounds": [
+    {
+      "round": 1,
+      "question": "What exact before → break → healed end state should a science-fair visitor witness in under 60 seconds?",
+      "answer": "Show the normal demo app, then manually make an edit and show it is broken, then turn on a feature flag in the URL to enable the self-healing runtime, and show how the self-healing runtime recovers it.",
+      "scores": {
+        "intent": 0.3,
+        "outcome": 0.6,
+        "scope": 0.4,
+        "constraints": 0.85,
+        "success": 0.3
+      },
+      "ambiguity": 0.55,
+      "target_dimension": "outcome",
+      "notes": [
+        "Clearer demo flow: healthy app -> manual break -> enable runtime via URL flag -> visible recovery.",
+        "Still unresolved: exact app surface, exact break, exact healed state, why this narrative matters, and what counts as recovery."
+      ]
+    },
+    {
+      "round": 2,
+      "question": "What is the single on-screen feature that should visibly go from healthy → broken → healed during the demo?",
+      "answer": "Could be anything - you tell me.",
+      "scores": {
+        "intent": 0.35,
+        "outcome": 0.62,
+        "scope": 0.5,
+        "constraints": 0.85,
+        "success": 0.35
+      },
+      "ambiguity": 0.515,
+      "target_dimension": "scope",
+      "notes": [
+        "User delegated exact feature choice to OMX, which partially resolves decision latitude.",
+        "Still unresolved: whether the break should take down the whole app or just one widget, which directly affects scope and UX."
+      ]
+    },
+    {
+      "round": 3,
+      "question": "When the seeded error happens, should the demo show the entire app broken, or one obvious widget broken while the rest of the page stays normal?",
+      "answer": "A particular interaction is broken (with a runtime error).",
+      "scores": {
+        "intent": 0.35,
+        "outcome": 0.66,
+        "scope": 0.64,
+        "constraints": 0.87,
+        "success": 0.4
+      },
+      "ambiguity": 0.432,
+      "target_dimension": "scope",
+      "notes": [
+        "Important boundary established: only one interaction breaks; the rest of the app should remain normal.",
+        "Still unresolved: whether the demo operator literally edits source code during the live demo or uses a built-in break trigger, and whether healing is in-memory only."
+      ]
+    },
+    {
+      "round": 4,
+      "question": "When you say you’ll “make an edit manually,” do you want the live demo to involve actually editing the demo app’s source code and refreshing, or should it use a built-in break trigger that represents your bad edit while keeping the story the same?",
+      "answer": "Actually editing and refreshing.",
+      "scores": {
+        "intent": 0.35,
+        "outcome": 0.7,
+        "scope": 0.8,
+        "constraints": 0.9,
+        "success": 0.45
+      },
+      "ambiguity": 0.383,
+      "target_dimension": "scope",
+      "notes": [
+        "Critical demo shape locked: the operator will manually edit the demo source and refresh to induce the failure.",
+        "This increases implementation realism but keeps the visible story simple.",
+        "Still unresolved: non-goals, decision boundaries, the exact interaction to heal, and what counts as successful recovery."
+      ]
+    },
+    {
+      "round": 5,
+      "question": "To keep this tiny, what is the most important thing the demo must not try to imply: persistent source-code rewriting, multiple-error intelligence, production-grade safety, or framework-agnostic magic?",
+      "answer": "Definitely no persistent source code rewriting. It can maybe put the hot fix into a log so we can see what's fixed. Definitely don't do framework agnostic.",
+      "scores": {
+        "intent": 0.4,
+        "outcome": 0.72,
+        "scope": 0.86,
+        "constraints": 0.95,
+        "success": 0.5
+      },
+      "ambiguity": 0.333,
+      "target_dimension": "non-goals",
+      "notes": [
+        "Non-goals now materially clearer: no persistent source rewriting; no framework-agnostic claims.",
+        "Useful allowance: logging the temporary hot fix is acceptable.",
+        "Still unresolved: the core audience takeaway, exact acceptance signal, and explicit decision boundaries for autonomous implementation."
+      ]
+    },
+    {
+      "round": 6,
+      "question": "Why is the manual bad edit + refresh important to your story—what exact claim should the viewer leave believing that a built-in “break me” button would not prove?",
+      "answer": "idk just keeps it simpler and the engineers can see the bug being introduced",
+      "scores": {
+        "intent": 0.55,
+        "outcome": 0.74,
+        "scope": 0.88,
+        "constraints": 0.95,
+        "success": 0.5
+      },
+      "ambiguity": 0.282,
+      "target_dimension": "intent",
+      "notes": [
+        "Intent is clearer: the manual edit is mainly a credibility device for engineer viewers, not a core product requirement beyond simplicity and visible causality.",
+        "Pressure pass complete: revisited the earlier manual-edit decision and exposed the assumption behind it."
+      ]
+    },
+    {
+      "round": 7,
+      "question": "For the 3-hour autonomous build, may I choose the exact framework/stack and the exact broken interaction myself, as long as it stays tiny, single-interaction, and not framework-agnostic?",
+      "answer": "yes",
+      "scores": {
+        "intent": 0.55,
+        "outcome": 0.74,
+        "scope": 0.92,
+        "constraints": 0.95,
+        "success": 0.5
+      },
+      "ambiguity": 0.274,
+      "target_dimension": "decision-boundaries",
+      "notes": [
+        "Decision boundary established: OMX may choose the exact stack and exact broken interaction within the stated constraints."
+      ]
+    },
+    {
+      "round": 8,
+      "question": "To keep the happy path tiny, after the runtime gets a patch should it automatically apply the fix and make the same interaction work immediately, or should it show the proposed fix first and wait for a click to apply?",
+      "answer": "It should automatically apply the fix on the client (make the client catch and execute the fixed code) but do not write the fix back to the source code. Definitely the user should be oblivious to this whole process and just see some benign UX (like a loading thing with some basic friendly twist). They should not know the code had an issue.",
+      "scores": {
+        "intent": 0.68,
+        "outcome": 0.84,
+        "scope": 0.93,
+        "constraints": 0.97,
+        "success": 0.72
+      },
+      "ambiguity": 0.177,
+      "target_dimension": "success",
+      "notes": [
+        "Happy-path recovery is now much clearer: automatic in-memory client-side fix application with no source persistence.",
+        "UX constraint locked: end user should only see benign loading/retry-style polish, not an explicit error or code-healing narrative.",
+        "Remaining ambiguity: whether operator-facing observability should be visible in-product (e.g. debug log/panel) or only via console/network traces."
+      ]
+    },
+    {
+      "round": 9,
+      "question": "After the flagged runtime catches the broken interaction, should the demo’s happy path be: A) the runtime heals and automatically completes/retries that same interaction, or B) the runtime heals, then the user must click again to prove it works?",
+      "answer": "A. (also i think it might need to give the relevant data / state / payload to the api so the ai knows how to recover it)",
+      "scores": {
+        "intent": 0.7,
+        "outcome": 0.88,
+        "scope": 0.94,
+        "constraints": 0.98,
+        "success": 0.85
+      },
+      "ambiguity": 0.15,
+      "target_dimension": "success",
+      "notes": [
+        "Success path now locked: heal, then automatically complete/retry the same interaction without another click.",
+        "New feasibility hint: send relevant interaction data/state/payload to the backend/OpenAI request, but the minimal payload contract is still unresolved."
+      ]
+    }
+  ],
+  "current_ambiguity": 0.15,
+  "threshold": 0.2,
+  "max_rounds": 12,
+  "challenge_modes_used": [
+    "contrarian",
+    "simplifier"
+  ],
+  "codebase_context": {
+    "repo_classification": "greenfield",
+    "evidence": [
+      "packages/self-heal-runtime missing",
+      "apps/demo missing",
+      "no existing app/runtime implementation files found",
+      "only AGENTS.md under .omx runtime metadata"
+    ]
+  },
+  "current_stage": "feasibility",
+  "current_focus": "constraints",
+  "non_goals_explicit": true,
+  "decision_boundaries_explicit": true,
+  "pressure_pass_complete": true,
+  "context_snapshot_path": ".omx/context/ralphthon-self-heal-runtime-demo-20260328T171354Z.md",
+  "iteration": 10,
+  "last_turn_at": "2026-03-28T17:33:27.957Z",
+  "scores": {
+    "intent": 0.7,
+    "outcome": 0.88,
+    "scope": 0.94,
+    "constraints": 0.99,
+    "success": 0.85
+  },
+  "completed_at": "2026-03-28T17:36:25Z",
+  "final_ambiguity": 0.149,
+  "round_count": 10,
+  "interview_path": ".omx/interviews/ralphthon-self-heal-runtime-demo-20260328T173610Z.md",
+  "spec_path": ".omx/specs/deep-interview-ralphthon-self-heal-runtime-demo.md",
+  "summary": "Interview complete. Spec locked for a tiny two-part repo with manual bad edit, URL-flag runtime injection, automatic in-memory healing, single interaction, and benign user-facing UX."
+}

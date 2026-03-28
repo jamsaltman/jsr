@@ -1,0 +1,24 @@
+{
+  "active": false,
+  "current_phase": "complete",
+  "started_at": "2026-03-28T17:36:30Z",
+  "completed_at": "2026-03-28T17:55:30Z",
+  "task_description": "Consensus plan for Ralphthon self-heal runtime demo from the approved deep-interview spec.",
+  "source_spec": ".omx/specs/deep-interview-ralphthon-self-heal-runtime-demo.md",
+  "approved_plan": ".omx/plans/ralplan-deep-interview-self-heal-runtime-demo.md",
+  "prd": ".omx/plans/prd-self-heal-runtime-demo.md",
+  "test_spec": ".omx/plans/test-spec-self-heal-runtime-demo.md",
+  "consensus": {
+    "planner": "approved after 2 revision passes",
+    "architect": "APPROVE",
+    "critic": "APPROVE"
+  },
+  "chosen_option": "Option A — Vite React SPA + tiny Node server + action-level patch registry",
+  "notes": [
+    "Exact interaction locked: Save note form",
+    "Manual break site locked: apps/demo/src/features/note/actions/createNoteAction.ts",
+    "URL flag locked: ?selfHeal=1",
+    "Tests require deterministic stub patch provider seam; manual demo uses real OpenAI-backed provider",
+    "Broken path must remain interaction-scoped while page shell stays mounted"
+  ]
+}
