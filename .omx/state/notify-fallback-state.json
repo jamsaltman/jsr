@@ -12,9 +12,9 @@
   "dispatch_drain": {
     "enabled": true,
     "max_per_tick": 5,
-    "run_count": 9403,
+    "run_count": 9439,
     "leader_only": true,
-    "last_tick_at": "2026-03-28T18:04:52.898Z",
+    "last_tick_at": "2026-03-28T18:05:04.795Z",
     "last_result": {
       "processed": 0,
       "skipped": 0,
@@ -26,17 +26,17 @@
     "enabled": true,
     "leader_only": true,
     "stale_threshold_ms": 180000,
-    "precomputed_leader_stale": true,
-    "last_tick_at": "2026-03-28T18:04:52.898Z",
+    "precomputed_leader_stale": false,
+    "last_tick_at": "2026-03-28T18:05:04.796Z",
     "last_error": null,
-    "run_count": 9403
+    "run_count": 9439
   },
   "ralph_continue_steer": {
     "enabled": true,
     "cadence_ms": 60000,
     "message": "Ralph loop active continue",
     "active": false,
-    "last_state_check_at": "2026-03-28T18:04:52.975Z",
+    "last_state_check_at": "2026-03-28T18:05:04.873Z",
     "last_sent_at": "",
     "cooldown_anchor_at": "",
     "last_reason": "cleared",
@@ -52,7 +52,7 @@
   "fallback_auto_nudge": {
     "enabled": true,
     "stall_ms": 5000,
-    "last_tick_at": "2026-03-28T18:04:52.974Z",
+    "last_tick_at": "2026-03-28T18:05:04.872Z",
     "last_turn_at": "2026-03-28T18:00:20.315Z",
     "last_turn_count": 20,
     "last_message": "Using $ralplan. Consensus planning is complete and **approved**.\n\n**Artifacts**\n- `.omx/plans/ralpla",
