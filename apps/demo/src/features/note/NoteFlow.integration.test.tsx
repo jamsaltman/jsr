@@ -20,7 +20,7 @@ const brokenCreateNoteAction: CreateNoteAction = async ({ text }) => {
 
 function renderDemoApp(options?: {
   initialUrlSearch?: string;
-  requestPatch?: (request: { actionId: string; input: { text: string } }) => Promise<PatchPayload>;
+  requestPatch?: <TInput>(request: { actionId: string; input: TInput }) => Promise<PatchPayload>;
   createNoteAction?: CreateNoteAction;
 }) {
   return render(

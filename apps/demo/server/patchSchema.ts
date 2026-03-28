@@ -9,8 +9,8 @@ export function validateRecoveryRequest(payload: unknown): CreateNoteRecoveryReq
 
   const candidate = payload as Partial<CreateNoteRecoveryRequest>;
 
-  if (candidate.actionId !== 'create-note') {
-    throw new Error('Only the create-note action can be healed in this demo.');
+  if (typeof candidate.actionId !== 'string' || candidate.actionId.trim().length === 0) {
+    throw new Error('Patch request actionId must be a non-empty string.');
   }
 
   if (!candidate.input || typeof candidate.input !== 'object' || typeof candidate.input.text !== 'string') {

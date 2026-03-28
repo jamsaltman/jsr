@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 
 import { handlePatchRoute } from './openaiPatchRoute';
 import { loadDemoEnvFiles } from './loadEnv';
+import { getPatchProviderStatus } from './patchProvider';
 
 loadDemoEnvFiles();
 
@@ -21,6 +22,12 @@ const server = createServer(async (request, response) => {
   if (request.url === '/health') {
     response.writeHead(200, { 'Content-Type': 'application/json' });
     response.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
+  if (request.url === '/api/self-heal/status') {
+    response.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    response.end(JSON.stringify(getPatchProviderStatus()));
     return;
   }
 

@@ -8,16 +8,16 @@ import {
   type StatusUpdate
 } from '@ralphthon/self-heal-runtime';
 
-import { actionKeyToActionId, buildActionHint, CREATE_NOTE_ACTION_ID } from './actionHints';
+import { actionKeyToActionId, buildActionHint } from './actionHints';
 import { isCreateNoteResult, type CreateNoteAction } from '../features/note/types';
 
-export type CreateNotePatchRequest = (
-  request: RecoveryRequest<{ text: string }>
+export type DemoPatchRequest = <TInput>(
+  request: RecoveryRequest<TInput>
 ) => Promise<PatchPayload>;
 
 export interface DemoRuntimeClientOptions {
   enabled: boolean;
-  requestPatch?: CreateNotePatchRequest;
+  requestPatch?: DemoPatchRequest;
   onStatusChange?: (update: StatusUpdate) => void;
   onPatchApplied?: (payload: PatchPayload) => void;
   onDiagnostic?: (message: string, details?: unknown) => void;
@@ -43,17 +43,18 @@ export async function requestPatchFromServer<TInput>(request: RecoveryRequest<TI
 ${payload.details}` : ''}` : 'Patch request failed.');
   }
 
-  return validatePatchPayload(payload, [CREATE_NOTE_ACTION_ID]);
+  return validatePatchPayload(payload);
 }
 
-export function createDemoRuntimeClient(options: DemoRuntimeClientOptions) {
+function createDemoRuntimeClient(options: DemoRuntimeClientOptions, actions: DemoActionCatalog) {
   const requestPatch = options.requestPatch ?? requestPatchFromServer;
+  const actionIds = Object.keys(actions).map((actionKey) => actionKeyToActionId(actionKey));
 
   return createSelfHealRuntime({
-    allowedActionIds: [CREATE_NOTE_ACTION_ID],
+    allowedActionIds: actionIds,
     enabled: options.enabled,
     resultValidators: {
-      [CREATE_NOTE_ACTION_ID]: isCreateNoteResult
+      [actionKeyToActionId('createNoteAction')]: isCreateNoteResult
     },
     requestPatch: (request) =>
       requestPatch(request as RecoveryRequest<{ text: string }>),
@@ -67,7 +68,7 @@ export function createDemoActionCatalog(
   options: DemoRuntimeClientOptions,
   actions: DemoActionCatalog
 ): DemoActionCatalog {
-  const runtime = createDemoRuntimeClient(options);
+  const runtime = createDemoRuntimeClient(options, actions);
 
   return createSelfHealActionCatalog({
     actions,

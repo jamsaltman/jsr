@@ -6,6 +6,7 @@
 - One manually introduced runtime bug
 - One transient client-side hotfix applied after enabling `?selfHeal=1`
 - One-time app bootstrap injection: exported async functions from `src/features/**/actions/*.ts` are auto-registered for healing
+- Successful hotfixes are cached for the current browser session so a reload can reuse them without another patch request
 
 ## Setup
 ```bash

@@ -1,9 +1,9 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { isSelfHealEnabledFromSearch, type StatusUpdate } from '@ralphthon/self-heal-runtime';
 
 import { appendOperatorLog, formatDetails, type OperatorLogEntry } from './operatorLog';
 import { discoverDemoActions, type DemoActionOverrides } from './discoverActions';
-import { createDemoActionCatalog, type CreateNotePatchRequest, type DemoActionCatalog } from './runtimeClient';
+import { createDemoActionCatalog, type DemoActionCatalog, type DemoPatchRequest } from './runtimeClient';
 
 interface DemoSelfHealContextValue {
   actions: DemoActionCatalog;
@@ -16,7 +16,7 @@ interface DemoSelfHealContextValue {
 interface DemoSelfHealProviderProps {
   children: ReactNode;
   initialUrlSearch?: string;
-  requestPatch?: CreateNotePatchRequest;
+  requestPatch?: DemoPatchRequest;
   actionOverrides?: DemoActionOverrides;
 }
 
@@ -41,6 +41,63 @@ export function DemoSelfHealProvider({
       })
     );
   }, []);
+
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      pushOperatorLog('error', 'Unhandled browser error.', event.error ?? event.message);
+    };
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      pushOperatorLog('error', 'Unhandled promise rejection.', event.reason);
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, [pushOperatorLog]);
+
+  useEffect(() => {
+    if (requestPatch || import.meta.env.MODE === 'test') {
+      return;
+    }
+
+    let cancelled = false;
+
+    void fetch('/api/self-heal/status')
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Status request failed with ${response.status}.`);
+        }
+
+        const payload = (await response.json()) as { mode?: string; model?: string | null; ready?: boolean };
+        if (cancelled) {
+          return;
+        }
+
+        const statusLine =
+          payload.mode === 'openai'
+            ? `Live provider ready (${payload.model ?? 'default model'}).`
+            : 'Stub provider active.';
+
+        pushOperatorLog('info', 'Self-heal provider status.', statusLine);
+
+        if (payload.mode === 'openai' && payload.ready === false) {
+          pushOperatorLog('error', 'Live provider is not ready.', 'OPENAI_API_KEY is missing or invalid for this server process.');
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          pushOperatorLog('error', 'Unable to load self-heal provider status.', error);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pushOperatorLog, requestPatch]);
 
   const actions = useMemo(
     () =>

@@ -38,6 +38,33 @@ describe('compilePatchPayload', () => {
 });
 
 describe('createSelfHealRuntime', () => {
+  function withSessionStorage<T>(callback: () => Promise<T> | T) {
+    const storage = new Map<string, string>();
+    const previousWindow = (globalThis as { window?: unknown }).window;
+    const sessionStorage = {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        storage.set(key, value);
+      },
+      removeItem: (key: string) => {
+        storage.delete(key);
+      }
+    };
+
+    (globalThis as { window?: unknown }).window = { sessionStorage };
+
+    const finish = () => {
+      if (previousWindow === undefined) {
+        delete (globalThis as { window?: unknown }).window;
+      } else {
+        (globalThis as { window?: unknown }).window = previousWindow;
+      }
+    };
+
+    const result = callback();
+    return Promise.resolve(result).finally(finish);
+  }
+
   it('requests a patch and retries exactly once', async () => {
     const requestPatch = vi.fn(async () => validPatch);
     const originalAction = vi.fn(async () => {
@@ -181,5 +208,102 @@ describe('createSelfHealRuntime', () => {
     ).rejects.toThrow('Patched result failed validation for create-note.');
 
     expect(runtime.registry.has('create-note')).toBe(false);
+  });
+
+  it('reuses a cached patch in the same browser session', async () => {
+    await withSessionStorage(async () => {
+      const requestPatch = vi.fn(async () => validPatch);
+
+      const runtimeA = createSelfHealRuntime({
+        allowedActionIds: ['create-note'],
+        enabled: true,
+        requestPatch
+      });
+
+      await expect(
+        runtimeA.executeAction({
+          actionId: 'create-note',
+          input: { text: 'hello' },
+          action: async () => {
+            throw new Error('broken original');
+          },
+          hint: 'fix create-note',
+          sourceSnippet: 'async function createNoteAction(input) { return input.text.trimmed(); }'
+        })
+      ).resolves.toEqual({
+        note: { id: 'patched-note', text: 'hello' }
+      });
+
+      expect(requestPatch).toHaveBeenCalledTimes(1);
+
+      const runtimeB = createSelfHealRuntime({
+        allowedActionIds: ['create-note'],
+        enabled: true,
+        requestPatch
+      });
+      const originalAction = vi.fn(async () => {
+        throw new Error('broken original');
+      });
+
+      await expect(
+        runtimeB.executeAction({
+          actionId: 'create-note',
+          input: { text: 'hello again' },
+          action: originalAction,
+          hint: 'fix create-note',
+          sourceSnippet: 'async function createNoteAction(input) { return input.text.trimmed(); }'
+        })
+      ).resolves.toEqual({
+        note: { id: 'patched-note', text: 'hello again' }
+      });
+
+      expect(requestPatch).toHaveBeenCalledTimes(1);
+      expect(originalAction).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  it('deduplicates concurrent patch requests for the same action', async () => {
+    let resolvePatch: ((patch: PatchPayload) => void) | undefined;
+    const requestPatch = vi.fn(
+      () =>
+        new Promise<PatchPayload>((resolve) => {
+          resolvePatch = resolve;
+        })
+    );
+
+    const runtime = createSelfHealRuntime({
+      allowedActionIds: ['create-note'],
+      enabled: true,
+      requestPatch
+    });
+
+    const originalAction = vi.fn(async () => {
+      throw new Error('broken original');
+    });
+
+    const firstRun = runtime.executeAction({
+      actionId: 'create-note',
+      input: { text: 'first' },
+      action: originalAction,
+      hint: 'fix create-note'
+    });
+    const secondRun = runtime.executeAction({
+      actionId: 'create-note',
+      input: { text: 'second' },
+      action: originalAction,
+      hint: 'fix create-note'
+    });
+
+    await Promise.resolve();
+    expect(requestPatch).toHaveBeenCalledTimes(1);
+
+    resolvePatch?.(validPatch);
+
+    await expect(firstRun).resolves.toEqual({
+      note: { id: 'patched-note', text: 'first' }
+    });
+    await expect(secondRun).resolves.toEqual({
+      note: { id: 'patched-note', text: 'second' }
+    });
   });
 });

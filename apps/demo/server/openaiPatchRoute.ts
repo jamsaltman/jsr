@@ -30,7 +30,7 @@ export async function handlePatchRoute(request: IncomingMessage, response: Serve
   try {
     const provider = createPatchProviderFromEnv();
     const payload = validateRecoveryRequest(await readJsonBody(request));
-    const patch = validatePatchPayload(await provider(payload), ['create-note']);
+    const patch = validatePatchPayload(await provider(payload), [payload.actionId]);
     writeJson(response, 200, patch);
   } catch (error) {
     writeJson(response, 503, {

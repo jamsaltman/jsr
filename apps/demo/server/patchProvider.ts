@@ -5,6 +5,12 @@ import { buildPatchPrompt } from './prompt';
 
 export type PatchProvider = (request: CreateNoteRecoveryRequest) => Promise<PatchPayload>;
 
+export interface PatchProviderStatus {
+  mode: 'stub' | 'openai';
+  model: string | null;
+  ready: boolean;
+}
+
 const STUB_PATCH: PatchPayload = {
   actionId: 'create-note',
   version: 1,
@@ -35,9 +41,9 @@ function extractOutputText(payload: any): string {
   throw new Error('OpenAI response did not include output text.');
 }
 
-function parsePatchPayload(text: string): PatchPayload {
+function parsePatchPayload(text: string, actionId: string): PatchPayload {
   try {
-    return validatePatchPayload(JSON.parse(text), ['create-note']);
+    return validatePatchPayload(JSON.parse(text), [actionId]);
   } catch {
     const match = text.match(/\{[\s\S]*\}/);
 
@@ -45,12 +51,18 @@ function parsePatchPayload(text: string): PatchPayload {
       throw new Error('OpenAI response did not contain a JSON patch payload.');
     }
 
-    return validatePatchPayload(JSON.parse(match[0]), ['create-note']);
+    return validatePatchPayload(JSON.parse(match[0]), [actionId]);
   }
 }
 
 export function createStubPatchProvider(): PatchProvider {
-  return async () => STUB_PATCH;
+  return async (request) => {
+    if (request.actionId !== 'create-note') {
+      throw new Error(`Stub patch provider only supports create-note. Received ${request.actionId}.`);
+    }
+
+    return STUB_PATCH;
+  };
 }
 
 export function createOpenAIPatchProvider(options: { apiKey?: string; model?: string }): PatchProvider {
@@ -77,7 +89,7 @@ export function createOpenAIPatchProvider(options: { apiKey?: string; model?: st
     }
 
     const payload = (await response.json()) as unknown;
-    return parsePatchPayload(extractOutputText(payload));
+    return parsePatchPayload(extractOutputText(payload), request.actionId);
   };
 }
 
@@ -90,4 +102,20 @@ export function createPatchProviderFromEnv(env: NodeJS.ProcessEnv = process.env)
     apiKey: env.OPENAI_API_KEY,
     model: env.OPENAI_MODEL
   });
+}
+
+export function getPatchProviderStatus(env: NodeJS.ProcessEnv = process.env): PatchProviderStatus {
+  if (env.SELF_HEAL_PATCH_PROVIDER === 'stub') {
+    return {
+      mode: 'stub',
+      model: null,
+      ready: true
+    };
+  }
+
+  return {
+    mode: 'openai',
+    model: env.OPENAI_MODEL ?? 'gpt-5.4',
+    ready: Boolean(env.OPENAI_API_KEY)
+  };
 }
