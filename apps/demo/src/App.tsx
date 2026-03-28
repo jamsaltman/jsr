@@ -1,19 +1,11 @@
-import { useCallback, useMemo, useState, type FormEvent } from 'react';
-import { isSelfHealEnabledFromSearch, type StatusUpdate } from '@ralphthon/self-heal-runtime';
+import { useCallback, useState, type FormEvent } from 'react';
+import type { StatusUpdate } from '@ralphthon/self-heal-runtime';
 
 import NoteForm from './features/note/components/NoteForm';
 import HealingStatus from './features/note/components/HealingStatus';
-import { MANUAL_BREAK_EDIT, createNoteAction as defaultCreateNoteAction } from './features/note/actions/createNoteAction';
-import type { CreateNoteAction, Note } from './features/note/types';
-import { buildCreateNoteHint, CREATE_NOTE_ACTION_ID } from './self-heal/actionHints';
-import { appendOperatorLog, formatDetails, type OperatorLogEntry } from './self-heal/operatorLog';
-import { createDemoRuntimeClient, type CreateNotePatchRequest } from './self-heal/runtimeClient';
-
-interface AppProps {
-  createNoteAction?: CreateNoteAction;
-  requestPatch?: CreateNotePatchRequest;
-  initialUrlSearch?: string;
-}
+import { MANUAL_BREAK_EDIT } from './features/note/actions/createNoteAction';
+import type { Note } from './features/note/types';
+import { useDemoSelfHeal } from './self-heal/provider';
 
 function statusMessage(status: StatusUpdate | null): string | null {
   if (!status) {
@@ -27,77 +19,28 @@ function statusMessage(status: StatusUpdate | null): string | null {
   return null;
 }
 
-export default function App({
-  createNoteAction = defaultCreateNoteAction,
-  requestPatch,
-  initialUrlSearch
-}: AppProps) {
-  const enabled = isSelfHealEnabledFromSearch(initialUrlSearch ?? window.location.search);
+export default function App() {
+  const { actions, currentStatus, enabled, operatorLog, reportOperatorError } = useDemoSelfHeal();
   const [draft, setDraft] = useState('');
   const [notes, setNotes] = useState<Note[]>([]);
-  const [currentStatus, setCurrentStatus] = useState<StatusUpdate | null>(null);
   const [failureMessage, setFailureMessage] = useState<string | null>(null);
-  const [operatorLog, setOperatorLog] = useState<OperatorLogEntry[]>([]);
-
-  const pushOperatorLog = useCallback((level: OperatorLogEntry['level'], message: string, details?: unknown) => {
-    setOperatorLog((entries) =>
-      appendOperatorLog(entries, {
-        level,
-        message,
-        details: formatDetails(details)
-      })
-    );
-  }, []);
-
-  const runtime = useMemo(
-    () =>
-      createDemoRuntimeClient({
-        enabled,
-        requestPatch,
-        onStatusChange: (update) => {
-          setCurrentStatus(update);
-          if (update.status === 'healing' || update.status === 'retrying') {
-            setFailureMessage(null);
-          }
-          if (update.status === 'retrying') {
-            pushOperatorLog('info', `Retrying ${update.actionId} once.`, 'Automatic retry is limited to a single attempt.');
-          }
-        },
-        onPatchApplied: (patch) => {
-          pushOperatorLog('info', `Installed transient hotfix for ${patch.actionId}.`, patch.rationale ?? 'Patch installed without rationale.');
-        },
-        onDiagnostic: (message, details) => {
-          pushOperatorLog('error', message, details);
-        }
-      }),
-    [enabled, pushOperatorLog, requestPatch]
-  );
 
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       setFailureMessage(null);
-      setCurrentStatus(null);
 
       try {
-        const result = await runtime.executeAction({
-          actionId: CREATE_NOTE_ACTION_ID,
-          input: { text: draft },
-          action: createNoteAction,
-          hint: buildCreateNoteHint(createNoteAction.toString()),
-          sourceSnippet: createNoteAction.toString()
-        });
+        const result = await actions.createNoteAction({ text: draft });
 
         setNotes((current) => [result.note, ...current]);
         setDraft('');
-        setCurrentStatus(null);
       } catch (error) {
-        setCurrentStatus(null);
         setFailureMessage('We couldn’t save that note just now.');
-        pushOperatorLog('error', 'Save note failed.', error);
+        reportOperatorError('Save note failed.', error);
       }
     },
-    [createNoteAction, draft, pushOperatorLog, runtime]
+    [actions, draft, reportOperatorError]
   );
 
   return (

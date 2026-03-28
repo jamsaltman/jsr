@@ -1,4 +1,7 @@
 import { spawn } from 'node:child_process';
+import { loadEnvFiles } from './load-env.mjs';
+
+loadEnvFiles();
 
 const commands = [
   {
@@ -15,6 +18,7 @@ const commands = [
 
 const children = commands.map(({ name, cmd, args }) => {
   const child = spawn(cmd, args, {
+    env: { ...process.env },
     stdio: 'inherit',
     shell: process.platform === 'win32'
   });

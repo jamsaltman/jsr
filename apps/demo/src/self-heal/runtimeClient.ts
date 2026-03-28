@@ -1,13 +1,15 @@
 import {
+  createSelfHealActionCatalog,
   createSelfHealRuntime,
   validatePatchPayload,
+  type ActionCatalog,
   type PatchPayload,
   type RecoveryRequest,
   type StatusUpdate
 } from '@ralphthon/self-heal-runtime';
 
-import { CREATE_NOTE_ACTION_ID } from './actionHints';
-import { isCreateNoteResult } from '../features/note/types';
+import { actionKeyToActionId, buildActionHint, CREATE_NOTE_ACTION_ID } from './actionHints';
+import { isCreateNoteResult, type CreateNoteAction } from '../features/note/types';
 
 export type CreateNotePatchRequest = (
   request: RecoveryRequest<{ text: string }>
@@ -19,6 +21,10 @@ export interface DemoRuntimeClientOptions {
   onStatusChange?: (update: StatusUpdate) => void;
   onPatchApplied?: (payload: PatchPayload) => void;
   onDiagnostic?: (message: string, details?: unknown) => void;
+}
+
+export interface DemoActionCatalog extends ActionCatalog {
+  createNoteAction: CreateNoteAction;
 }
 
 export async function requestPatchFromServer<TInput>(request: RecoveryRequest<TInput>): Promise<PatchPayload> {
@@ -55,4 +61,18 @@ export function createDemoRuntimeClient(options: DemoRuntimeClientOptions) {
     onPatchApplied: options.onPatchApplied,
     onDiagnostic: options.onDiagnostic
   });
+}
+
+export function createDemoActionCatalog(
+  options: DemoRuntimeClientOptions,
+  actions: DemoActionCatalog
+): DemoActionCatalog {
+  const runtime = createDemoRuntimeClient(options);
+
+  return createSelfHealActionCatalog({
+    actions,
+    executor: runtime,
+    getActionId: (key) => actionKeyToActionId(String(key)),
+    buildHint: (key, action) => buildActionHint(actionKeyToActionId(String(key)), action.toString())
+  }) as DemoActionCatalog;
 }

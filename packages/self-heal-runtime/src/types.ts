@@ -41,3 +41,19 @@ export interface ExecuteActionOptions<TInput, TOutput> {
   hint: string;
   sourceSnippet?: string;
 }
+
+export interface SelfHealExecutor {
+  executeAction<TInput, TOutput>(actionOptions: ExecuteActionOptions<TInput, TOutput>): Promise<TOutput>;
+}
+
+export type AsyncAction<TInput = unknown, TOutput = unknown> = (input: TInput) => Promise<TOutput>;
+
+export type ActionCatalog = Record<string, AsyncAction<any, any>>;
+
+export interface ActionCatalogOptions<TActions extends ActionCatalog> {
+  actions: TActions;
+  executor: SelfHealExecutor;
+  getActionId?: <K extends keyof TActions>(key: K, action: TActions[K]) => string;
+  buildHint?: <K extends keyof TActions>(key: K, action: TActions[K]) => string;
+  getSourceSnippet?: <K extends keyof TActions>(key: K, action: TActions[K]) => string | undefined;
+}

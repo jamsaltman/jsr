@@ -5,6 +5,7 @@ import type { PatchPayload } from '@ralphthon/self-heal-runtime';
 
 import type { CreateNoteAction } from './types';
 import App from '../../App';
+import { DemoSelfHealProvider } from '../../self-heal/provider';
 
 const brokenCreateNoteAction: CreateNoteAction = async ({ text }) => {
   const trimmedText = (text as unknown as { trimmed: () => string }).trimmed();
@@ -17,10 +18,26 @@ const brokenCreateNoteAction: CreateNoteAction = async ({ text }) => {
   };
 };
 
+function renderDemoApp(options?: {
+  initialUrlSearch?: string;
+  requestPatch?: (request: { actionId: string; input: { text: string } }) => Promise<PatchPayload>;
+  createNoteAction?: CreateNoteAction;
+}) {
+  return render(
+    <DemoSelfHealProvider
+      initialUrlSearch={options?.initialUrlSearch}
+      requestPatch={options?.requestPatch}
+      actionOverrides={options?.createNoteAction ? { createNoteAction: options.createNoteAction } : undefined}
+    >
+      <App />
+    </DemoSelfHealProvider>
+  );
+}
+
 describe('App note flow', () => {
   it('saves a note on the healthy path without self-heal', async () => {
     const user = userEvent.setup();
-    render(<App initialUrlSearch="" />);
+    renderDemoApp({ initialUrlSearch: '' });
 
     await user.type(screen.getByLabelText(/write a quick note/i), 'hello');
     await user.click(screen.getByRole('button', { name: /save note/i }));
@@ -30,7 +47,7 @@ describe('App note flow', () => {
 
   it('keeps the page mounted when the interaction is broken without self-heal', async () => {
     const user = userEvent.setup();
-    render(<App createNoteAction={brokenCreateNoteAction} initialUrlSearch="" />);
+    renderDemoApp({ createNoteAction: brokenCreateNoteAction, initialUrlSearch: '' });
 
     await user.type(screen.getByLabelText(/write a quick note/i), 'hello again');
     await user.click(screen.getByRole('button', { name: /save note/i }));
@@ -59,7 +76,7 @@ describe('App note flow', () => {
       };
       return patch;
     });
-    render(<App createNoteAction={brokenAction} initialUrlSearch="?selfHeal=1" requestPatch={requestPatch} />);
+    renderDemoApp({ createNoteAction: brokenAction, initialUrlSearch: '?selfHeal=1', requestPatch });
 
     await user.type(screen.getByLabelText(/write a quick note/i), 'hello again');
     await user.click(screen.getByRole('button', { name: /save note/i }));

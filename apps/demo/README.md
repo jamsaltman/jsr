@@ -19,11 +19,18 @@ The one-command startup path runs:
 ## Live OpenAI demo configuration
 The manual demo path uses the real OpenAI-backed provider unless you explicitly set `SELF_HEAL_PATCH_PROVIDER=stub`.
 
-Required environment for the live OpenAI path:
+You can put live credentials in a repo-root `.env.local` file and `npm run dev` will load them automatically for the demo server:
 ```bash
-export OPENAI_API_KEY=your-key
-export OPENAI_MODEL=gpt-5.4-mini # optional override
+cp .env.example .env.local
 ```
+
+Then edit `.env.local`:
+```bash
+OPENAI_API_KEY=your-key
+OPENAI_MODEL=gpt-5.4-mini
+```
+
+`.env` is also supported, and exported shell variables still win if you already have them set.
 
 If `OPENAI_API_KEY` is missing in live mode, the demo fails closed and logs the diagnostic in the operator panel plus the demo server output.
 

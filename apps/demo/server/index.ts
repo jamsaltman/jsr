@@ -1,6 +1,9 @@
 import { createServer } from 'node:http';
 
 import { handlePatchRoute } from './openaiPatchRoute';
+import { loadDemoEnvFiles } from './loadEnv';
+
+loadDemoEnvFiles();
 
 const port = Number(process.env.SELF_HEAL_SERVER_PORT ?? 5050);
 
