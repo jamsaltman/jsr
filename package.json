@@ -1,0 +1,34 @@
+{
+  "name": "jsr-self-heal-demo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "npm run build --workspace packages/self-heal-runtime && npm run build --workspace apps/demo",
+    "typecheck": "npm run typecheck --workspace packages/self-heal-runtime && npm run typecheck --workspace apps/demo",
+    "test": "npm run test --workspace packages/self-heal-runtime && npm run test --workspace apps/demo",
+    "lint": "eslint . --ext .ts,.tsx,.js,.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^24.7.2",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.1.0",
+    "eslint": "^9.39.1",
+    "jsdom": "^27.0.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.0",
+    "vite": "^7.1.12",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,17 +1,17 @@
 {
   "version": 1,
   "active": false,
-  "skill": "ralplan",
-  "keyword": "$ralplan",
+  "skill": "ralph",
+  "keyword": "$ralph",
   "phase": "completing",
-  "activated_at": "2026-03-28T18:00:20.319Z",
-  "updated_at": "2026-03-28T18:05:04.873Z",
+  "activated_at": "2026-03-28T18:35:58.184Z",
+  "updated_at": "2026-03-28T18:44:26.157Z",
   "source": "keyword-detector",
   "input_lock": {
     "active": false,
     "scope": "deep-interview-auto-approval",
     "acquired_at": "2026-03-28T17:14:42.929Z",
-    "released_at": "2026-03-28T18:00:20.319Z",
+    "released_at": "2026-03-28T18:35:58.184Z",
     "blocked_inputs": [
       "yes",
       "y",
