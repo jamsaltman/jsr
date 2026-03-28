@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "active": false,
+  "active": true,
   "skill": "ralph",
   "keyword": "$ralph",
-  "phase": "completing",
+  "phase": "reviewing",
   "activated_at": "2026-03-28T18:35:58.184Z",
-  "updated_at": "2026-03-28T18:44:26.157Z",
+  "updated_at": "2026-03-28T22:53:43.007Z",
   "source": "keyword-detector",
   "input_lock": {
     "active": false,
