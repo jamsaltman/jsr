@@ -9,7 +9,8 @@ import {
 } from '@ralphthon/self-heal-runtime';
 
 import { actionKeyToActionId, buildActionHint } from './actionHints';
-import { isCreateNoteResult, type CreateNoteAction } from '../features/note/types';
+import type { AutoHealMetadata } from './discoverActions';
+import type { CreateNoteAction } from '../features/note/types';
 
 export type DemoPatchRequest = <TInput>(
   request: RecoveryRequest<TInput>
@@ -46,16 +47,23 @@ ${payload.details}` : ''}` : 'Patch request failed.');
   return validatePatchPayload(payload);
 }
 
-function createDemoRuntimeClient(options: DemoRuntimeClientOptions, actions: DemoActionCatalog) {
+function createDemoRuntimeClient(
+  options: DemoRuntimeClientOptions,
+  actions: DemoActionCatalog,
+  metadata: Partial<Record<string, AutoHealMetadata>>
+) {
   const requestPatch = options.requestPatch ?? requestPatchFromServer;
   const actionIds = Object.keys(actions).map((actionKey) => actionKeyToActionId(actionKey));
+  const resultValidators = Object.fromEntries(
+    Object.entries(metadata)
+      .filter(([, value]) => typeof value?.validateResult === 'function')
+      .map(([actionKey, value]) => [value?.actionId ?? actionKeyToActionId(actionKey), value!.validateResult!])
+  );
 
   return createSelfHealRuntime({
     allowedActionIds: actionIds,
     enabled: options.enabled,
-    resultValidators: {
-      [actionKeyToActionId('createNoteAction')]: isCreateNoteResult
-    },
+    resultValidators,
     requestPatch: (request) =>
       requestPatch(request as RecoveryRequest<{ text: string }>),
     onStatusChange: options.onStatusChange,
@@ -66,14 +74,17 @@ function createDemoRuntimeClient(options: DemoRuntimeClientOptions, actions: Dem
 
 export function createDemoActionCatalog(
   options: DemoRuntimeClientOptions,
-  actions: DemoActionCatalog
+  actions: DemoActionCatalog,
+  metadata: Partial<Record<string, AutoHealMetadata>> = {}
 ): DemoActionCatalog {
-  const runtime = createDemoRuntimeClient(options, actions);
+  const runtime = createDemoRuntimeClient(options, actions, metadata);
 
   return createSelfHealActionCatalog({
     actions,
     executor: runtime,
-    getActionId: (key) => actionKeyToActionId(String(key)),
-    buildHint: (key, action) => buildActionHint(actionKeyToActionId(String(key)), action.toString())
+    getActionId: (key) => metadata[String(key)]?.actionId ?? actionKeyToActionId(String(key)),
+    buildHint: (key, action) =>
+      metadata[String(key)]?.buildHint?.(action.toString()) ??
+      buildActionHint(metadata[String(key)]?.actionId ?? actionKeyToActionId(String(key)), action.toString())
   }) as DemoActionCatalog;
 }

@@ -100,8 +100,10 @@ export function DemoSelfHealProvider({
   }, [pushOperatorLog, requestPatch]);
 
   const actions = useMemo(
-    () =>
-      createDemoActionCatalog(
+    () => {
+      const discovered = discoverDemoActions(actionOverrides);
+
+      return createDemoActionCatalog(
         {
           enabled,
           requestPatch,
@@ -118,8 +120,10 @@ export function DemoSelfHealProvider({
             pushOperatorLog('error', message, details);
           }
         },
-        discoverDemoActions(actionOverrides)
-      ),
+        discovered.actions,
+        discovered.metadata
+      );
+    },
     [actionOverrides, enabled, pushOperatorLog, requestPatch]
   );
 
